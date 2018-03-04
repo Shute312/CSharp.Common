@@ -27,9 +27,11 @@ namespace Common.Serialization
             string result = serializer.Serialize(obj);
             return result;
         }
-        public bool SerializeToFile<T>(T obj, string file)
+        public bool SerializeToFile<T>(T obj, string filePath)
         {
-            throw new NotImplementedException();
+            var json = Serialize<T>(obj);
+            var stream = json.ToBytes().ToStream();
+            return IO.FileUtils.Write(filePath, stream);
         }
         public T DeserializeFromFile<T>(string filePath)
         {

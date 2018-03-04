@@ -10,33 +10,13 @@ namespace Common.ExtensionMethods
 {
     public static class StreamEx
     {
-        public static byte[] ReadAll(this Stream stream, int offset = 0, long length = 0)
+        public static byte[] ReadAll(this Stream stream, int offset = 0, int length = 0)
         {
-            byte[] buff = null;
-            if (stream.CanRead)
-            {
-                if (length <= 0)
-                    length = stream.Length - stream.Position - offset;
-                buff = new byte[length];
-                int count = 0;
-                int waitCount = 0;
-                while (offset < length - 1 && waitCount < 5)
-                {
-                    count = stream.Read(buff, offset, buff.Length - offset);
-                    if (count == 0)
-                    {
-                        waitCount++;
-                        Thread.Sleep(20);
-                    }
-                    else
-                    {
-                        offset += count;
-                    }
-                }
-            }
-            return buff;
+            return IO.StreamEx.ReadAll(stream,offset,length);
         }
-
+        public static int WriteTo(this Stream input, Stream output) {
+            return IO.StreamEx.Write(input, output);
+        }
         public static Stream ToStream(this byte[] buff)
         {
             if (buff == null) return null;

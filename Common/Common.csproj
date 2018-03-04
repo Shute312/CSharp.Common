@@ -46,6 +46,8 @@
     <Compile Include="ExtensionMethods\EnumerableEx.cs" />
     <Compile Include="ExtensionMethods\StreamEx.cs" />
     <Compile Include="ExtensionMethods\StringEx.cs" />
+    <Compile Include="IO\FileUtils.cs" />
+    <Compile Include="IO\StreamEx.cs" />
     <Compile Include="Serialization\Binary.cs" />
     <Compile Include="Serialization\ProtocolBuffer.cs" />
     <Compile Include="Serialization\Xml.cs" />
@@ -56,7 +58,6 @@
   <ItemGroup>
     <Folder Include="Decode\" />
     <Folder Include="Http\" />
-    <Folder Include="IO\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
