@@ -8,10 +8,9 @@ using System.Web;
 
 namespace Common.Excel.Export
 {
-    public class VirtualLayout:IDisposable
+    public class VirtualLayout
     {
         List<Cell> cellList;
-        Graphics graphics;
         public VirtualLayout()
         {
             cellList = new List<Cell>();
@@ -97,6 +96,10 @@ namespace Common.Excel.Export
             int[] widths =new int[colCount];
             int[] heights = new int[rowCount];
             Size[,] silePlanar = new Size[colCount,rowCount];
+            ;
+            Graphics graphics = Graphics.FromImage(new Bitmap(
+                Math.Max(cellList.Max(p => p.MaxWidth), ExcelStyle.MaxWidth),
+                Math.Max(cellList.Max(p => p.MaxHeight), ExcelStyle.MaxHeight)));
             for (int y = 0; y < rowCount; y++)
             {
                 for (int x = 0; x < colCount; x++)
@@ -152,20 +155,10 @@ namespace Common.Excel.Export
             cellList.Clear();
         }
 
-        public void Dispose()
-        {
-            if (graphics != null) graphics.Dispose();
-            cellList = null;
-        }
-
-        private Size CalcSize(Cell cell)
+        private Size CalcSize(Cell cell, Graphics graphics)
         {
             if (cell == null) return new Size(int.MinValue, int.MinValue);//空白，用MinValue
             if (IsFormula(cell)) return new Size(int.MaxValue, int.MaxValue);
-            if (graphics == null)
-            {
-                graphics = Graphics.FromImage(new Bitmap(400,200));
-            }
             var text = cell.Display;
             if (string.IsNullOrEmpty(text)) return new Size(int.MinValue, int.MinValue);//空白，用MinValue
             var fontFamily = cell.FontFamily == null ? ExcelStyle.FontFamily : cell.FontFamily;
