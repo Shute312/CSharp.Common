@@ -10,11 +10,18 @@ namespace Common.Excel.Export.Models
     {
         public ExcelStyle()
         {
+#if DEBUG
+            MaxColWidth = 40;
+            MaxRowHeight = 20;
+            MinColWidth = 5;
+            MinRowHeight = 5;
+#else
             MaxWidth = 200;
             MaxHeight = 100;
             MinWidth = 20;
             MinHeight = 24;
-            
+#endif
+
             //字体
             FontColor = Color.Black;
             BackgroundColor = Color.Transparent;
@@ -26,21 +33,21 @@ namespace Common.Excel.Export.Models
             WhiteSpace = Consts.WhiteSpace.NoWrap;
         }
         /// <summary>
-        /// 单元格最大宽度
+        /// 最大列度
         /// </summary>
-        public int MaxWidth { get; set; }
+        public int MaxColWidth { get; set; }
         /// <summary>
-        /// 单元格最大高度
+        /// 最大行度
         /// </summary>
-        public int MaxHeight { get; set; }
+        public int MaxRowHeight { get; set; }
         /// <summary>
-        /// 单元格最小宽度
+        /// 最小列度
         /// </summary>
-        public int MinWidth { get; set; }
+        public int MinColWidth { get; set; }
         /// <summary>
-        /// 单元格最小高度
+        /// 最小行度
         /// </summary>
-        public int MinHeight { get; set; }
+        public int MinRowHeight { get; set; }
 
         #region 字体相关属性
         public Color FontColor { get; set; }
@@ -56,7 +63,7 @@ namespace Common.Excel.Export.Models
         public bool IsBold { get; set; }
 
         public bool IsItalic { get; set; }
-        #endregion
+#endregion
         public Consts.TextAlign TextAlign { get; set; }
         /// <summary>
         /// 换行方式

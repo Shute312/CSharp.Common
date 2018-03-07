@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Encode\Crc.cs" />
     <Compile Include="Encode\Poly.cs" />
+    <Compile Include="Excel\Export\ExportHelper.cs" />
     <Compile Include="Excel\Export\Consts.cs" />
     <Compile Include="Excel\Export\ExcelExport.cs" />
     <Compile Include="Excel\Export\Models\BorderModel.cs" />
@@ -58,6 +59,8 @@
     <Compile Include="Excel\Export\Models\RenderCell.cs" />
     <Compile Include="Excel\Export\Test.cs" />
     <Compile Include="Excel\Export\VirtualLayout.cs" />
+    <Compile Include="Excel\Helper.cs" />
+    <Compile Include="Excel\Unit.cs" />
     <Compile Include="ExtensionMethods\EnumerableEx.cs" />
     <Compile Include="ExtensionMethods\StreamEx.cs" />
     <Compile Include="ExtensionMethods\StringEx.cs" />

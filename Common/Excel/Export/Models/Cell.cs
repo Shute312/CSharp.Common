@@ -17,6 +17,7 @@ namespace Common.Excel.Export.Models
         public Cell(object value)
         {
             SetValue(value,null);
+            //FontUnit = GraphicsUnit.Point;//单位
         }
         public Cell(object value, int rowIndex, int colIndex)
             : this(value)
@@ -46,30 +47,35 @@ namespace Common.Excel.Export.Models
             ColIndex = index;
             RowIndex = yNo + 1;
         }
-        public string Style { get; set; }
+        public string Style { get; private set; }
         /// <summary>
         /// 公式、表达式,需要设计表单式
         /// </summary>
         public string Formula { get; set; }
-        public object Value
-        {
-            get;
-            set;
-        }
+        public object Value { get; private set; }
         /// <summary>
         /// Value最终可视的效果
         /// </summary>
-        public string Display {
-            get;
-        }
-        public int Width { get; set; }
-        public int Height { get; set; }
+        public string Display { get; private set; }
+        public int PixelWidth { get; set; }
+        public int PixelHeight { get; set; }
 
+        /// <summary>
+        /// 单元格最小宽度,不能小于0（注：如果同一列的多个单元格MinWidth不相同，以最大的那个为准)
+        /// </summary>
         public int MinWidth { get; set; }
+        /// <summary>
+        /// 单元格最大宽度,不能小于0（注：如果同一列的多个单元格MaxWidth不相同，以大于0的最小的那个为准)
+        /// </summary>
         public int MaxWidth { get; set; }
 
+        /// <summary>
+        /// 单元格最小高度,不能小于0（注：如果同一行的多个单元格MinHeight不相同，以最大的那个为准)
+        /// </summary>
         public int MinHeight { get; set; }
-
+        /// <summary>
+        /// 单元格最大高度,不能小于0（注：如果同一行的多个单元格MaxHeight不相同，以大于0的最小的那个为准)
+        /// </summary>
         public int MaxHeight { get; set; }
         public int RowIndex { get; set; }
         public int ColIndex { get; set; }
@@ -83,7 +89,7 @@ namespace Common.Excel.Export.Models
         /// </summary>
         public int Rowspan { get; set; }
 
-        public Consts.TextAlign TextAlign { get; set; }
+        public Consts.TextAlign? TextAlign { get; set; }
 
         #region 字体相关属性
         public Color FontColor { get; set; }
@@ -92,6 +98,10 @@ namespace Common.Excel.Export.Models
         public FontFamily FontFamily { get; set; }
 
         public float FontSize { get; set; }
+        ///// <summary>
+        ///// 字体单位，默认是Point
+        ///// </summary>
+        //public GraphicsUnit FontUnit { get; set; }
 
         /// <summary>
         /// 字体加粗
@@ -99,6 +109,10 @@ namespace Common.Excel.Export.Models
         public bool IsBold { get; set; }
 
         public bool IsItalic { get; set; }
+        /// <summary>
+        /// 文本是否自动换行
+        /// </summary>
+        public Consts.WhiteSpace? WhiteSpace { get; set; }
         #endregion
 
         public string SetValue(object value, string style)
@@ -111,32 +125,46 @@ namespace Common.Excel.Export.Models
             //注:这里的Style是最终写入到Excel的，跟字符串Format无关系
             if (value != null)
             {
-                string format;
-                //todo 判断显示样式
-                if (!string.IsNullOrEmpty(style))
-                {
+                string format = string.Empty;
 
+                if (!string.IsNullOrEmpty(Style))
+                {
+                    //todo 根据数据类型，给出默认Style
+                }
+                if (!string.IsNullOrEmpty(Style))
+                {
+                    //todo 根据Style，给出format
                 }
                 else
                 {
+                    if (value is DateTime) format = "yyyy/MM/dd";
                 }
-
                 if (value is DateTime)
-                {
-                }
+                    Display = ((DateTime)value).ToString(format);
                 else if (value is int)
-                {
-                }
+                    Display = ((int)value).ToString(format);
+                else if (value is uint)
+                    Display = ((uint)value).ToString(format);
                 else if (value is long)
-                {
-                }
-                else
-                {
+                    Display = ((long)value).ToString(format);
+                else if (value is ulong)
+                    Display = ((ulong)value).ToString(format);
+                else if (value is float)
+                    Display = ((float)value).ToString(format);
+                else if (value is double)
+                    Display = ((double)value).ToString(format);
+                else if(value is decimal)
+                    //货币要根据Style处理
                     throw new NotImplementedException();
-                }
+                else if (value is bool)
+                    //遇到需要将bool转化为 Man/Female, 是/否这种，应该额外提供FormatProvider
+                    throw new NotImplementedException();
+                else
+                    throw new NotImplementedException();
             }
             else
             {
+                Display = string.Empty;
                 //todo 配置默认格式
                 throw new NotImplementedException();
             }
