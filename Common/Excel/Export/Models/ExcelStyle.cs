@@ -10,27 +10,22 @@ namespace Common.Excel.Export.Models
     {
         public ExcelStyle()
         {
-//#if DEBUG
-//            MaxColWidth = 40;
-//            MaxRowHeight = 20;
-//            MinColWidth = 5;
-//            MinRowHeight = 5;
-//#else
-            MaxColWidth = 200;
-            MaxRowHeight = 30;
             MinColWidth = 60;
+            MaxColWidth = 200;
             MinRowHeight = 24;
-//#endif
+            MaxRowHeight = 50;
 
             //字体
             FontColor = Color.Black;
             BackgroundColor = Color.Transparent;
-            FontFamily = new FontFamily("Arial");
-            FontSize = 11;
+            //FontFamily = new FontFamily("Arial");
+            FontFamily = new FontFamily("宋体");
+            //FontFamily = new FontFamily("Calibri");
+            FontSize = 12;
             Bold = false;
             Italic = false;
             TextAlign = Consts.TextAlign.MiddleCenter;
-            WhiteSpace = Consts.WhiteSpace.NoWrap;
+            WhiteSpace = Consts.WhiteSpace.Wrap;
         }
         /// <summary>
         /// 最大列度

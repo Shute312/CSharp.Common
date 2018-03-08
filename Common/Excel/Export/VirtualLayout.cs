@@ -111,6 +111,10 @@ namespace Common.Excel.Export
             int[] heights = new int[rowCount];
             Size[,] sizePlanar = CreatePlanar<Size>(colCount, rowCount);
             Graphics graphics = Graphics.FromImage(new Bitmap(GRAPHICS_WIDTH, GRAPHICS_HEIGHT));
+            //graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            //graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.GammaCorrected;
+            //graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            //graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
             //各列可用宽度
             for (int x = 0; x < colCount; x++)
             {
@@ -239,7 +243,7 @@ namespace Common.Excel.Export
                     {
                         var size = sizePlanar[x, y];
                         if (size.Height == 0) continue;
-                        var mw = widths[x];
+                        var mw = widths.Skip(x).Take(cell.Colspan + 1).Sum();
                         //重新获取一次尺寸
                         if (size.Width > mw)
                         {
@@ -397,11 +401,12 @@ namespace Common.Excel.Export
             FontStyle fontStyle = FontStyle.Regular;//似乎无法设置粗斜体
             if (italic) fontStyle = FontStyle.Italic;
             if (bold) fontStyle = FontStyle.Bold;
-            var font = new Font(fontFamily, fontSize, fontStyle);
+            var font = new Font(fontFamily, fontSize, fontStyle, GraphicsUnit.Point);
             //fontSize = Unit.Pound2Pixel(fontSize,Unit.GetDpi());
             var sz = graphics.MeasureString(text, font, maxWidth);
             //graphics.PageUnit = cell.FontUnit;
-            var size = new Size((int)sz.Width + 4, (int)sz.Height + 4);//加一点Padding
+             var size = new Size((int)sz.Width, (int)sz.Height);
+            //var size = new Size((int)sz.Width * 9 / 10, (int)sz.Height);
             //if (cell.Width > cell.MinWidth && cell.Width < cell.MaxWidth && cell.Width > size.Width) size.Width = cell.Width;
             //if (cell.Height > cell.MinHeight && cell.Height < cell.MaxHeight && cell.Height > size.Height) size.Height = cell.Height;
             return size;

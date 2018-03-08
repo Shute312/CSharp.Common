@@ -22,9 +22,11 @@ namespace Common
             Image image = new Bitmap(1000,5000);
             Graphics graphics = Graphics.FromImage(image);
             var text = "我站在北京天安门广场观看升国旗,五星红旗随风飘扬";
-            var sz = graphics.MeasureString(text, new Font(new FontFamily("Arial"), 11), 1000);
-            graphics.DrawString(text, new Font(new FontFamily("Arial"), 11) ,new SolidBrush(Color.Black),0,0);
-            image.Save("E:\\DrawString.bmp");
+            var fontSize = new ExcelStyle().FontSize;
+            var fontFamily = new ExcelStyle().FontFamily;
+            var sz = graphics.MeasureString(text, new Font(fontFamily, fontSize), 1000);
+            graphics.DrawString(text, new Font(fontFamily, fontSize) ,new SolidBrush(Color.Black),0,0);
+            image.Save("D:\\DrawString.bmp");
 
             ExcelExport export = new ExcelExport();
             List<Cell> list = new List<Cell>();
@@ -42,7 +44,7 @@ namespace Common
             ExcelPackage package = null;
             try
             {
-                var localFilePath = "E:\\Text.xlsx";
+                var localFilePath = "D:\\Text.xlsx";
                 package = new ExcelPackage();
                 var sheetName = "Sheet1";
                 var sheet = package.Workbook.Worksheets.Add(sheetName);
@@ -70,7 +72,7 @@ namespace Common
             ExcelPackage package = null;
             try
             {
-                var localFilePath = "E:\\TestEpPlus.xlsx";
+                var localFilePath = "D:\\TestEpPlus.xlsx";
                 package = new ExcelPackage();
                 var sheetName = "Sheet1";
                 var sheet = package.Workbook.Worksheets.Add(sheetName);
