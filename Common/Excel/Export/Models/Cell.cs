@@ -57,24 +57,24 @@ namespace Common.Excel.Export.Models
         /// Value最终可视的效果
         /// </summary>
         public string Display { get; private set; }
-        public int PixelWidth { get; set; }
-        public int PixelHeight { get; set; }
+        public int Width { get;internal set; }
+        public int Height { get; internal set; }
 
         /// <summary>
-        /// 单元格最小宽度,不能小于0（注：如果同一列的多个单元格MinWidth不相同，以最大的那个为准)
+        /// [单位：像素]单元格最小宽度,不能小于0（注：如果同一列的多个单元格MinWidth不相同，以最大的那个为准)
         /// </summary>
         public int MinWidth { get; set; }
         /// <summary>
-        /// 单元格最大宽度,不能小于0（注：如果同一列的多个单元格MaxWidth不相同，以大于0的最小的那个为准)
+        /// [单位：像素]单元格最大宽度,不能小于0（注：如果同一列的多个单元格MaxWidth不相同，以大于0的最小的那个为准)
         /// </summary>
         public int MaxWidth { get; set; }
 
         /// <summary>
-        /// 单元格最小高度,不能小于0（注：如果同一行的多个单元格MinHeight不相同，以最大的那个为准)
+        /// [单位：像素]单元格最小高度,不能小于0（注：如果同一行的多个单元格MinHeight不相同，以最大的那个为准)
         /// </summary>
         public int MinHeight { get; set; }
         /// <summary>
-        /// 单元格最大高度,不能小于0（注：如果同一行的多个单元格MaxHeight不相同，以大于0的最小的那个为准)
+        /// [单位：像素]单元格最大高度,不能小于0（注：如果同一行的多个单元格MaxHeight不相同，以大于0的最小的那个为准)
         /// </summary>
         public int MaxHeight { get; set; }
         public int RowIndex { get; set; }
@@ -92,12 +92,12 @@ namespace Common.Excel.Export.Models
         public Consts.TextAlign? TextAlign { get; set; }
 
         #region 字体相关属性
-        public Color FontColor { get; set; }
-        public Color BackgroundColor { get; set; }
+        public Color? FontColor { get; set; }
+        public Color? BackgroundColor { get; set; }
 
         public FontFamily FontFamily { get; set; }
 
-        public float FontSize { get; set; }
+        public float? FontSize { get; set; }
         ///// <summary>
         ///// 字体单位，默认是Point
         ///// </summary>
@@ -106,9 +106,9 @@ namespace Common.Excel.Export.Models
         /// <summary>
         /// 字体加粗
         /// </summary>
-        public bool IsBold { get; set; }
+        public bool? IsBold { get; set; }
 
-        public bool IsItalic { get; set; }
+        public bool? IsItalic { get; set; }
         /// <summary>
         /// 文本是否自动换行
         /// </summary>
@@ -139,7 +139,9 @@ namespace Common.Excel.Export.Models
                 {
                     if (value is DateTime) format = "yyyy/MM/dd";
                 }
-                if (value is DateTime)
+                if (value is string)
+                    Display = (string)value;
+                else if (value is DateTime)
                     Display = ((DateTime)value).ToString(format);
                 else if (value is int)
                     Display = ((int)value).ToString(format);
@@ -153,7 +155,7 @@ namespace Common.Excel.Export.Models
                     Display = ((float)value).ToString(format);
                 else if (value is double)
                     Display = ((double)value).ToString(format);
-                else if(value is decimal)
+                else if (value is decimal)
                     //货币要根据Style处理
                     throw new NotImplementedException();
                 else if (value is bool)
@@ -169,6 +171,62 @@ namespace Common.Excel.Export.Models
                 throw new NotImplementedException();
             }
             return Display;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value">Excel中使用的高度</param>
+        public void SetExcelHeight(int value)
+        {
+            Contract.Assert(value >= 0);
+            if (value == 0) Height = 0;
+            Height = GetPixelHeight(value);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value">Excel中使用的宽度</param>
+        public void SetExcelWidth(int value)
+        {
+            Contract.Assert(value >= 0);
+            if (value == 0) Width = 0;
+            Width = GetPixelWidth(value);
+        }
+        public int GetExcelHeight()
+        {
+            return GetExcelHeight(Height);
+        }
+        public int GetExcelWidth()
+        {
+            return GetExcelWidth(Width);
+        }
+        public static int GetPixelHeight(int value)
+        {
+            return (int)Math.Round(Unit.Pound2Pixel(value, Unit.GetDpi()));
+        }
+
+        public static int GetPixelWidth(int value)
+        {
+            return (int)Math.Round(Unit.Pound2Pixel(value * MultipleOfHeight(), Unit.GetDpi()));
+        }
+
+        public static int GetExcelHeight(int pixel)
+        {
+            return (int)Math.Round(Unit.Pixel2Pound(pixel, Unit.GetDpi()));
+        }
+
+        public static int GetExcelWidth(int pixel)
+        {
+            return (int)Math.Round(Unit.Pixel2Pound(pixel / MultipleOfHeight(), Unit.GetDpi()));
+        }
+        /// <summary>
+        /// 高度是宽度的多少倍
+        /// </summary>
+        /// <returns></returns>
+        internal static float MultipleOfHeight()
+        {
+            //todo 是否要根据DPI计算
+            return 5.25f;
         }
     }
 }

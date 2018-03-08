@@ -54,8 +54,8 @@ namespace Common.Excel.Export
                 Contract.Assert(cell.ColIndex > -1);
                 Contract.Assert(cell.Rowspan > -1);
                 Contract.Assert(cell.Colspan > -1);
-                var cols = cell.ColIndex + cell.Colspan;
-                var rows = cell.RowIndex + cell.Rowspan;
+                var cols = cell.ColIndex + cell.Colspan + 1;
+                var rows = cell.RowIndex + cell.Rowspan + 1;
                 if (rowCount < rows) rowCount = rows;
                 if (colCount < cols) colCount = cols;
             }
@@ -90,9 +90,9 @@ namespace Common.Excel.Export
                 var maxColIndex = cell.ColIndex + cell.Colspan;
                 var minRowIndex = cell.RowIndex;
                 var maxRowIndex = cell.RowIndex + cell.Colspan;
-                for (int x = minColIndex; x < maxColIndex; x++)
+                for (int x = minColIndex; x <= maxColIndex; x++)
                 {
-                    for (int y = minRowIndex; y < maxRowIndex; y++)
+                    for (int y = minRowIndex; y <= maxRowIndex; y++)
                     {
                         //遇到跨行列的单元格时，用同一个单元格对象覆盖多个位置
                         cellPlanar[x, y] = cell;
@@ -116,7 +116,7 @@ namespace Common.Excel.Export
             {
                 var arr = GetCol(cellPlanar, x);
                 //同一列中，各个单元格分别设置MaxWidth，以大于0中，最小的为准
-                var mw = arr.Where(p=>p.MaxWidth>0).Min(p => p.MaxWidth);
+                var mw = Min(arr.Where(p => p != null && p.MaxWidth > 0).Select(p=>p.MaxWidth));
                 if (mw == 0) mw = ExcelStyle.MaxColWidth;
                 availbleWidths[x] = mw;
             }
@@ -124,7 +124,7 @@ namespace Common.Excel.Export
             for (int y = 0; y < rowCount; y++)
             {
                 var arr = GetRow(cellPlanar, y);
-                var mh = arr.Where(p => p.MaxHeight > 0).Min(p => p.MaxHeight);
+                var mh = Min(arr.Where(p => p != null && p.MaxHeight > 0).Select(p=>p.MaxHeight));
                 if (mh == 0) mh = ExcelStyle.MaxRowHeight;
                 availbleHeights[y] = mh;
             }
@@ -154,7 +154,7 @@ namespace Common.Excel.Export
             {
                 //计算各个列需要的宽度
                 var arr = GetCol(sizePlanar, x);
-                requireWidths[x] = arr.Select(p => p.Width).Max();
+                requireWidths[x] = Max(arr.Where(p => p != null).Select(p => p.Width));
             }
             for (int x = 0; x < colCount; x++)
             {
@@ -163,6 +163,7 @@ namespace Common.Excel.Export
                 for (int y = 0; y < rowCount; y++)
                 {
                     var cell = cellPlanar[x, y];
+                    if (cell == null) continue;
                     if (cell.Colspan > 0) continue;
                     var size = sizePlanar[x, y];
                     if (size.Width > 0) iw = Math.Max(iw, size.Width);
@@ -176,6 +177,7 @@ namespace Common.Excel.Export
                 for (int y = 0; y < rowCount; y++)
                 {
                     var cell = cellPlanar[x, y];
+                    if (cell == null) continue;
                     if (cell.Colspan == 0) continue;
                     if (cell.RowIndex != y) continue;//跨列单元格的延伸单元格
                     if (cell.ColIndex != x) continue;
@@ -188,7 +190,7 @@ namespace Common.Excel.Export
                     var maxWidth = list.Max(p => p.Item2.Width);
                     var tuple = list.Find(p => p.Item2.Width == maxWidth);
                     var cell = tuple.Item1;
-                    var aws = availbleWidths.Skip(x).Take(cell.Colspan).ToArray();//单元格所处的多个列的有效宽度是多少
+                    var aws = availbleWidths.Skip(x).Take(cell.Colspan+1).ToArray();//单元格所处的多个列的有效宽度是多少
                     var sumWidth = aws.Sum();
                     //如果跨越的多个列的总宽度小于等于这个单元格要求的宽度
                     if (sumWidth <= maxWidth)
@@ -201,7 +203,7 @@ namespace Common.Excel.Export
                     else
                     {
                         //要将多出来的这些宽度，分配到这个单元格跨越的列中去
-                        float remain = maxWidth - widths.Skip(x).Take(cell.Colspan).Sum();
+                        float remain = maxWidth - widths.Skip(x).Take(cell.Colspan+1).Sum();
                         while (remain > 0)
                         {
                             for (int c = 0; c <= cell.Colspan; c++)
@@ -213,7 +215,7 @@ namespace Common.Excel.Export
                                 if (w > aw) w = aw;
                                 widths[xc] = w;
                             }
-                            remain = maxWidth - widths.Skip(x).Take(cell.Colspan).Sum();//再次计算还有多少空间未分配(widths.Skip(x).Take(cell.Colspan).Sum()是可变值)
+                            remain = maxWidth - widths.Skip(x).Take(cell.Colspan+1).Sum();//再次计算还有多少空间未分配(widths.Skip(x).Take(cell.Colspan+1).Sum()是可变值)
                             if (remain < 0) widths[x + cell.Colspan] -= (int)remain;//Ceiling的向上取整，导致会多几个宽度
                         }
                     }
@@ -263,6 +265,7 @@ namespace Common.Excel.Export
                 for (int x = 0; x < colCount; x++)
                 {
                     var cell = cellPlanar[x, y];
+                    if (cell == null) continue;
                     if (cell.Rowspan > 0) continue;
                     var size = sizePlanar[x, y];
                     if (size.Height > 0) ih = Math.Max(ih, size.Height);
@@ -276,6 +279,7 @@ namespace Common.Excel.Export
                 for (int x = 0; x < colCount; x++)
                 {
                     var cell = cellPlanar[x, y];
+                    if (cell == null) continue;
                     if (cell.Rowspan == 0) continue;
                     if (cell.RowIndex != y) continue;//跨行单元格的延伸单元格
                     if (cell.ColIndex != x) continue;
@@ -289,7 +293,7 @@ namespace Common.Excel.Export
                     var maxHeight = list.Max(p => p.Item2.Height);//取出最大的高度
                     var tuple = list.Find(p => p.Item2.Height == maxHeight);
                     var cell = tuple.Item1;
-                    var ahs = availbleHeights.Skip(y).Take(cell.Rowspan).ToArray();//单元格所处的多个行的有效高度是多少
+                    var ahs = availbleHeights.Skip(y).Take(cell.Rowspan+1).ToArray();//单元格所处的多个行的有效高度是多少
                     var sumHeight = ahs.Sum();
                     //如果跨越的多个列的总宽度小于等于这个单元格要求的宽度
                     if (sumHeight <= maxHeight)
@@ -302,7 +306,7 @@ namespace Common.Excel.Export
                     else
                     {
                         //要将多出来的这些宽度，分配到这个单元格跨越的列中去
-                        float remain = maxHeight - heights.Skip(y).Take(cell.Rowspan).Sum();
+                        float remain = maxHeight - heights.Skip(y).Take(cell.Rowspan+1).Sum();
                         while (remain > 0)
                         {
                             for (int r = 0; r <= cell.Rowspan; r++)
@@ -314,7 +318,7 @@ namespace Common.Excel.Export
                                 if (h > ah) h = ah;
                                 heights[yr] = h;
                             }
-                            remain = maxHeight - heights.Skip(y).Take(cell.Rowspan).Sum();//再次计算还有多少空间未分配(heights.Skip(y).Take(cell.Rowspan)是可变值)
+                            remain = maxHeight - heights.Skip(y).Take(cell.Rowspan+1).Sum();//再次计算还有多少空间未分配(heights.Skip(y).Take(cell.Rowspan+1)是可变值)
                             if (remain < 0) heights[y + cell.Rowspan] -= (int)remain;//Ceiling的向上取整，导致会多几个高度
                         }
                     }
@@ -328,7 +332,7 @@ namespace Common.Excel.Export
             for (int x = 0; x < widths.Length; x++)
             {
                 var arr = GetCol(cellPlanar, x);
-                var wl = (from item in arr where item.PixelWidth > item.MinWidth && item.PixelWidth < item.MaxWidth select item.PixelWidth).ToArray();
+                var wl = (from item in arr where item != null && item.Width > item.MinWidth && item.Width < item.MaxWidth select item.Width).ToArray();
                 if (wl != null && wl.Length > 0)
                 {
                     var mw = wl.Max();
@@ -336,14 +340,14 @@ namespace Common.Excel.Export
                 }
                 if (widths[x] == 0)
                 {
-                    widths[x] = Math.Max(ExcelStyle.MinColWidth, arr.Select(p=>p.MinWidth).Max());
+                    widths[x] = Math.Max(ExcelStyle.MinColWidth, Max(arr.Where(p => p != null).Select(p => p.MinWidth)));
                 }
             }
             //将行高设置为符合Height设定的值
             for (int y = 0; y < heights.Length; y++)
             {
                 var arr = GetRow(cellPlanar, y);
-                var hl = (from item in arr where item.PixelHeight > item.MinHeight && item.PixelHeight < item.MaxHeight select item.PixelHeight).ToArray();
+                var hl = (from item in arr where item!=null && item.Height > item.MinHeight && item.Height < item.MaxHeight select item.Height).ToArray();
                 if (hl != null && hl.Length > 0)
                 {
                     var mh = hl.Max();
@@ -351,7 +355,7 @@ namespace Common.Excel.Export
                 }
                 if (heights[y] == 0)
                 {
-                    heights[y] = Math.Max(ExcelStyle.MinRowHeight, arr.Select(p => p.MinHeight).Max());
+                    heights[y] = Math.Max(ExcelStyle.MinRowHeight, Max(arr.Where(p => p != null).Select(p => p.MinHeight)));
                 }
             }
 
@@ -360,13 +364,13 @@ namespace Common.Excel.Export
             foreach (var cell in cellList)
             {
                 if (cell.Colspan > 0)
-                    cell.PixelWidth = widths.Skip(cell.ColIndex).Take(cell.Colspan).Sum();
+                    cell.Width = widths.Skip(cell.ColIndex).Take(cell.Colspan+1).Sum();
                 else
-                    cell.PixelWidth = widths[cell.ColIndex];
+                    cell.Width = widths[cell.ColIndex];
                 if (cell.Rowspan > 0)
-                    cell.PixelHeight = heights.Skip(cell.RowIndex).Take(cell.Rowspan).Sum();
+                    cell.Height = heights.Skip(cell.RowIndex).Take(cell.Rowspan+1).Sum();
                 else
-                    cell.PixelHeight = heights[cell.RowIndex];
+                    cell.Height = heights[cell.RowIndex];
             }
             Size totalSize = new Size(widths.Sum(), heights.Sum());
             return totalSize;
@@ -385,7 +389,8 @@ namespace Common.Excel.Export
             var text = cell.Display;
             if (string.IsNullOrEmpty(text)) return new Size(0, 0);//string.Empty，用0
             var fontFamily = cell.FontFamily == null ? ExcelStyle.FontFamily : cell.FontFamily;
-            var fontSize = cell.FontSize <= 0 ? ExcelStyle.FontSize : cell.FontSize;
+            var fontSize = cell.FontSize==null ? ExcelStyle.FontSize : cell.FontSize.Value;
+            fontSize = Unit.Pound2Pixel(fontSize,Unit.GetDpi());
             var sz = graphics.MeasureString(text, new Font(fontFamily, fontSize), maxWidth);
             //graphics.PageUnit = cell.FontUnit;
             var size = new Size((int)sz.Width, (int)sz.Height);
@@ -435,6 +440,21 @@ namespace Common.Excel.Export
                 arr[y] = planar[colIndex, y];
             }
             return arr;
+        }
+        public static TSource Min<TSource>(IEnumerable<TSource> source)
+        {
+            if (source == null || source.Count() == 0) return default(TSource);
+            return source.Min();
+        }
+        public static TSource Max<TSource>(IEnumerable<TSource> source)
+        {
+            if (source == null || source.Count() == 0) return default(TSource);
+            return source.Max();
+        }
+        public static int Sum(IEnumerable<int> source)
+        {
+            if (source == null || source.Count() == 0) return default(int);
+            return source.Sum();
         }
     }
 }

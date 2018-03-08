@@ -8,6 +8,8 @@ namespace Common.Excel
 {
     public class Unit
     {
+        private static int DPI = 96;
+
         public static float Pixel2Pound(float pixel, float dpi)
         {
             //72磅＝1英寸，1英寸 = 2.54厘米
@@ -38,6 +40,11 @@ namespace Common.Excel
         public static float Pixel2Inch(float pixel, float dpi)
         {
             return pixel / dpi;
+        }
+        public static int GetDpi()
+        {
+            //todo 计算分辨率
+            return DPI;
         }
     }
 }

@@ -13,14 +13,13 @@ namespace Common.Excel.Export
         public bool Export(IEnumerable<Models.Cell> cells, ExcelWorksheet sheet, Models.ExcelStyle excelStyle = null)
         {
             if (excelStyle == null) excelStyle = new Models.ExcelStyle();
-
-            //sheet.Cells.Style.ShrinkToFit = true;//单元格自动适应大小（实际效果为：填充根据单元格的Size，自动缩放到合适大小）
-            //sheet.Cells.Style.WrapText = true; //单元格文字自动换行
-            //sheet.DefaultColWidth = 10; //默认列宽
-            //sheet.DefaultRowHeight = 30; //默认行高
-            sheet.DefaultColWidth = excelStyle.MinColWidth;
-            sheet.DefaultRowHeight = excelStyle.MinRowHeight;
-
+            sheet.DefaultColWidth = Models.Cell.GetExcelWidth(excelStyle.MinColWidth);
+            sheet.DefaultRowHeight = Models.Cell.GetExcelHeight(excelStyle.MinRowHeight);
+            sheet.Cells.Style.Font.Bold = excelStyle.IsBold;
+            sheet.Cells.Style.Font.Color.SetColor(excelStyle.FontColor);
+            sheet.Cells.Style.Font.Italic = excelStyle.IsItalic;
+            sheet.Cells.Style.Font.Size = excelStyle.FontSize;
+            sheet.Cells.Style.Font.Name = excelStyle.FontFamily.Name;
             foreach (var cell in cells)
             {
                 var rowNo = cell.RowIndex + 1;
@@ -33,8 +32,13 @@ namespace Common.Excel.Export
                 sheet.SetValue(rowNo, colNo, cell.Value);
                 sheet.Row(rowNo).CustomHeight = true;//手动调节行高
                 excelRange.Style.WrapText = true;//自动换行
-                sheet.Row(rowNo).Height = GetRowDistance(cell.PixelHeight);//设置行高
-                sheet.Column(colNo).Width = GetColDistance(cell.PixelWidth);//设置列宽
+                if(cell.IsItalic!=null) excelRange.Style.Font.Italic = cell.IsItalic.Value;
+                if(cell.IsBold!=null) excelRange.Style.Font.Bold = cell.IsBold.Value;
+                if (cell.FontColor != null) excelRange.Style.Font.Color.SetColor(cell.FontColor.Value);
+                if (cell.FontSize != null) excelRange.Style.Font.Size = cell.FontSize.Value;
+                if (cell.FontFamily != null) excelRange.Style.Font.Name = cell.FontFamily.Name;
+                sheet.Row(rowNo).Height = cell.GetExcelHeight();//设置行高
+                sheet.Column(colNo).Width = cell.GetExcelWidth();//设置列宽
             }
             return false;
         }
@@ -63,22 +67,6 @@ namespace Common.Excel.Export
             if (value == 0) return ExcelVerticalAlignment.Top;
             else if (value == 1) return ExcelVerticalAlignment.Center;
             else return ExcelVerticalAlignment.Bottom;
-        }
-        /// <summary>
-        /// Excel中行高所使用单位为磅(72磅＝1英寸，1英寸 = 2.54厘米)
-        /// </summary>
-        /// <returns></returns>
-        public float GetRowDistance(float pixel, float dpi = 96)
-        {
-            return Unit.Pixel2Pound(pixel, dpi);
-        }
-        /// <summary>
-        /// 列宽使用单位为1/12英寸(72磅＝1英寸，1英寸 = 2.54厘米)
-        /// </summary>
-        /// <returns></returns>
-        public float GetColDistance(float pixel, float dpi = 96)
-        {
-            return Unit.Pixel2Pound(pixel, dpi) * 5.25f;
         }
     }
 }

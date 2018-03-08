@@ -16,17 +16,17 @@ namespace Common.Excel.Export.Models
             MinColWidth = 5;
             MinRowHeight = 5;
 #else
-            MaxWidth = 200;
-            MaxHeight = 100;
-            MinWidth = 20;
-            MinHeight = 24;
+            MaxColWidth = 200;
+            MaxRowHeight = 100;
+            MinColWidth = 60;
+            MinRowHeight = 24;
 #endif
 
             //字体
             FontColor = Color.Black;
             BackgroundColor = Color.Transparent;
             FontFamily = new FontFamily("Arial");
-            FontSize = 10;
+            FontSize = 11;
             IsBold = false;
             IsItalic = false;
             TextAlign = Consts.TextAlign.MiddleCenter;
