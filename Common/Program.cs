@@ -3,6 +3,7 @@ using Common.Excel.Export.Models;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,9 +19,16 @@ namespace Common
         [STAThread]
         static void Main()
         {
+            Image image = new Bitmap(1000,5000);
+            Graphics graphics = Graphics.FromImage(image);
+            var text = "我站在北京天安门广场观看升国旗,五星红旗随风飘扬";
+            var sz = graphics.MeasureString(text, new Font(new FontFamily("Arial"), 11), 1000);
+            graphics.DrawString(text, new Font(new FontFamily("Arial"), 11) ,new SolidBrush(Color.Black),0,0);
+            image.Save("E:\\DrawString.bmp");
+
             ExcelExport export = new ExcelExport();
             List<Cell> list = new List<Cell>();
-            list.Add(new Cell("我站在北京天安门广场观看升国旗") { RowIndex = 0, ColIndex = 0, Rowspan = 1 });
+            list.Add(new Cell("我站在北京天安门广场观看升国旗") { RowIndex = 0, ColIndex = 0, Rowspan = 1 ,TextAlign = Consts.TextAlign.MiddleLeft});
             list.Add(new Cell("我站在北京天安门广场观看升国旗,五星红旗随风飘扬") { RowIndex = 0, ColIndex = 1, Colspan = 2 });
             list.Add(new Cell(DateTime.Now) { RowIndex = 0, ColIndex = 4 });
             list.Add(new Cell("2,2") { RowIndex = 1, ColIndex = 1 });

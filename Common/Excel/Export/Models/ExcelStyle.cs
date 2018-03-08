@@ -10,25 +10,25 @@ namespace Common.Excel.Export.Models
     {
         public ExcelStyle()
         {
-#if DEBUG
-            MaxColWidth = 40;
-            MaxRowHeight = 20;
-            MinColWidth = 5;
-            MinRowHeight = 5;
-#else
+//#if DEBUG
+//            MaxColWidth = 40;
+//            MaxRowHeight = 20;
+//            MinColWidth = 5;
+//            MinRowHeight = 5;
+//#else
             MaxColWidth = 200;
-            MaxRowHeight = 100;
+            MaxRowHeight = 30;
             MinColWidth = 60;
             MinRowHeight = 24;
-#endif
+//#endif
 
             //字体
             FontColor = Color.Black;
             BackgroundColor = Color.Transparent;
             FontFamily = new FontFamily("Arial");
             FontSize = 11;
-            IsBold = false;
-            IsItalic = false;
+            Bold = false;
+            Italic = false;
             TextAlign = Consts.TextAlign.MiddleCenter;
             WhiteSpace = Consts.WhiteSpace.NoWrap;
         }
@@ -60,9 +60,9 @@ namespace Common.Excel.Export.Models
         /// <summary>
         /// 字体加粗
         /// </summary>
-        public bool IsBold { get; set; }
+        public bool Bold { get; set; }
 
-        public bool IsItalic { get; set; }
+        public bool Italic { get; set; }
 #endregion
         public Consts.TextAlign TextAlign { get; set; }
         /// <summary>

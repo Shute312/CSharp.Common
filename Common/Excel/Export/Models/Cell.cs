@@ -106,9 +106,9 @@ namespace Common.Excel.Export.Models
         /// <summary>
         /// 字体加粗
         /// </summary>
-        public bool? IsBold { get; set; }
+        public bool? Bold { get; set; }
 
-        public bool? IsItalic { get; set; }
+        public bool? Italic { get; set; }
         /// <summary>
         /// 文本是否自动换行
         /// </summary>

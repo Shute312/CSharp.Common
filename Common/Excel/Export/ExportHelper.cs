@@ -15,9 +15,9 @@ namespace Common.Excel.Export
             if (excelStyle == null) excelStyle = new Models.ExcelStyle();
             sheet.DefaultColWidth = Models.Cell.GetExcelWidth(excelStyle.MinColWidth);
             sheet.DefaultRowHeight = Models.Cell.GetExcelHeight(excelStyle.MinRowHeight);
-            sheet.Cells.Style.Font.Bold = excelStyle.IsBold;
+            sheet.Cells.Style.Font.Bold = excelStyle.Bold;
             sheet.Cells.Style.Font.Color.SetColor(excelStyle.FontColor);
-            sheet.Cells.Style.Font.Italic = excelStyle.IsItalic;
+            sheet.Cells.Style.Font.Italic = excelStyle.Italic;
             sheet.Cells.Style.Font.Size = excelStyle.FontSize;
             sheet.Cells.Style.Font.Name = excelStyle.FontFamily.Name;
             foreach (var cell in cells)
@@ -32,8 +32,8 @@ namespace Common.Excel.Export
                 sheet.SetValue(rowNo, colNo, cell.Value);
                 sheet.Row(rowNo).CustomHeight = true;//手动调节行高
                 excelRange.Style.WrapText = true;//自动换行
-                if(cell.IsItalic!=null) excelRange.Style.Font.Italic = cell.IsItalic.Value;
-                if(cell.IsBold!=null) excelRange.Style.Font.Bold = cell.IsBold.Value;
+                if(cell.Italic!=null) excelRange.Style.Font.Italic = cell.Italic.Value;
+                if(cell.Bold!=null) excelRange.Style.Font.Bold = cell.Bold.Value;
                 if (cell.FontColor != null) excelRange.Style.Font.Color.SetColor(cell.FontColor.Value);
                 if (cell.FontSize != null) excelRange.Style.Font.Size = cell.FontSize.Value;
                 if (cell.FontFamily != null) excelRange.Style.Font.Name = cell.FontFamily.Name;
