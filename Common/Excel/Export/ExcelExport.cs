@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics.Contracts;
 using OfficeOpenXml;
 using System.IO;
+using System.Diagnostics;
 
 namespace Common.Excel.Export
 {
@@ -15,12 +16,17 @@ namespace Common.Excel.Export
             throw new NotImplementedException();
         }
 
-        public bool Export(IEnumerable<Models.Cell> cells, ExcelWorksheet sheet)
+        public bool Export(IEnumerable<Models.Cell> cells, ExcelWorksheet sheet,Models.ExcelStyle excelStyle = null)
         {
             Contract.Assert(cells != null && cells.Count() > 0);
             var layout = new VirtualLayout();
             layout.AddRange(cells);
+            Stopwatch stopwatch = new Stopwatch();
+            if (excelStyle != null) layout.ExcelStyle = excelStyle;
+            stopwatch.Start();
             var size = layout.Calculate();
+            stopwatch.Stop();
+            var time = stopwatch.Elapsed;
             layout.Clear();
             ExportHelper exportHelper = new ExportHelper();
             return exportHelper.Export(cells, sheet,layout.ExcelStyle);

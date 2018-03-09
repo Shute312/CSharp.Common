@@ -66,7 +66,7 @@ namespace Common.Excel.Export
                 var minColIndex = cell.ColIndex;
                 var maxColIndex = cell.ColIndex + cell.Colspan;
                 var minRowIndex = cell.RowIndex;
-                var maxRowIndex = cell.RowIndex + cell.Colspan;
+                var maxRowIndex = cell.RowIndex + cell.Rowspan;
                 for (int x = minColIndex; x < maxColIndex; x++)
                 {
                     for (int y = minRowIndex; y < maxRowIndex; y++)
@@ -89,7 +89,7 @@ namespace Common.Excel.Export
                 var minColIndex = cell.ColIndex;
                 var maxColIndex = cell.ColIndex + cell.Colspan;
                 var minRowIndex = cell.RowIndex;
-                var maxRowIndex = cell.RowIndex + cell.Colspan;
+                var maxRowIndex = cell.RowIndex + cell.Rowspan;
                 for (int x = minColIndex; x <= maxColIndex; x++)
                 {
                     for (int y = minRowIndex; y <= maxRowIndex; y++)
@@ -100,16 +100,13 @@ namespace Common.Excel.Export
                 }
             }
             //2、度量所需要的各行高、各列宽
-            //需要的列宽高
-            int[] requireWidths = new int[colCount];
-            int[] requireHeights = new int[rowCount];
             //可用的列宽高
             int[] availbleWidths = new int[colCount];
             int[] availbleHeights = new int[rowCount];
             //最终使用的列宽高
             int[] widths = new int[colCount];
             int[] heights = new int[rowCount];
-            Size[,] sizePlanar = CreatePlanar<Size>(colCount, rowCount);
+            Size[,] sizeTextPlanar = CreatePlanar<Size>(colCount, rowCount);//文本Size
             Graphics graphics = Graphics.FromImage(new Bitmap(GRAPHICS_WIDTH, GRAPHICS_HEIGHT));
             //graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             //graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.GammaCorrected;
@@ -138,28 +135,22 @@ namespace Common.Excel.Export
                 for (int y = 0; y < rowCount; y++)
                 {
                     var cell = cellPlanar[x, y];
-                    if (cell == null) sizePlanar[x, y] = new Size(NULL_DEFAULT_WIDTH, NULL_DEFAULT_HEIGHT);//null
-                    else if (IsFormula(cell)) sizePlanar[x, y] = new Size(FORMULA_DEFAULT_WIDTH, FORMULA_DEFAULT_HEIGHT);//公式，用MaxValue
+                    if (cell == null) sizeTextPlanar[x, y] = new Size(NULL_DEFAULT_WIDTH, NULL_DEFAULT_HEIGHT);//null
+                    else if (IsFormula(cell)) sizeTextPlanar[x, y] = new Size(FORMULA_DEFAULT_WIDTH, FORMULA_DEFAULT_HEIGHT);//公式，用MaxValue
                     //跨行、列的单元格的延伸格，使用0
-                    else if ((cell.Rowspan > 0 || cell.Rowspan > 0) && (cell.RowIndex != y || cell.ColIndex != x)) sizePlanar[x, y] = new Size(SLAVE_DEFAULT_WIDTH, SLAVE_DEFAULT_HEIGHT);
-                    else if (string.IsNullOrEmpty(cell.Display)) sizePlanar[x, y] = new Size(0, 0);
+                    else if ((cell.Rowspan > 0 || cell.Colspan > 0) && (cell.RowIndex != y || cell.ColIndex != x)) sizeTextPlanar[x, y] = new Size(SLAVE_DEFAULT_WIDTH, SLAVE_DEFAULT_HEIGHT);
+                    else if (string.IsNullOrEmpty(cell.Display)) sizeTextPlanar[x, y] = new Size(0, 0);
                     else
                     {
                         var mw = availbleWidths[x];
                         if (cell.Colspan > 0 && GRAPHICS_WIDTH > mw) mw = GRAPHICS_WIDTH;
                         var sz = CalcRequireSize(cellPlanar[x, y], graphics, mw);
-                        sizePlanar[x, y] = sz;
+                        sizeTextPlanar[x, y] = sz;
                     }
                 }
             }
 
             #region 先满足列宽,再处理行高
-            for (int x = 0; x < colCount; x++)
-            {
-                //计算各个列需要的宽度
-                var arr = GetCol(sizePlanar, x);
-                requireWidths[x] = Max(arr.Where(p => p != null).Select(p => p.Width));
-            }
             for (int x = 0; x < colCount; x++)
             {
                 //排除跨列的单元格，计算出要多大的宽度
@@ -169,8 +160,16 @@ namespace Common.Excel.Export
                     var cell = cellPlanar[x, y];
                     if (cell == null) continue;
                     if (cell.Colspan > 0) continue;
-                    var size = sizePlanar[x, y];
-                    if (size.Width > 0) iw = Math.Max(iw, size.Width);
+                    var size = sizeTextPlanar[x, y];
+                    iw = Math.Max(iw, size.Width);
+                    if (cell.MinWidth > 0)
+                        iw = Math.Max(iw, cell.MinWidth);
+                    else
+                        iw = Math.Max(iw, ExcelStyle.MinColWidth);
+                    if (cell.MaxWidth > 0)
+                        iw = Math.Min(iw,cell.MaxWidth);
+                    else
+                        iw = Math.Min(iw,ExcelStyle.MaxColWidth);
                 }
                 widths[x] = iw;
             }
@@ -185,7 +184,7 @@ namespace Common.Excel.Export
                     if (cell.Colspan == 0) continue;
                     if (cell.RowIndex != y) continue;//跨列单元格的延伸单元格
                     if (cell.ColIndex != x) continue;
-                    var size = sizePlanar[x, y];
+                    var size = sizeTextPlanar[x, y];
                     if (size.Width == 0) continue;
                     if (size.Width <= availbleWidths[x]) continue;
                     list.Add(new Tuple<Cell, Size, int>(cell, size, y));
@@ -241,7 +240,7 @@ namespace Common.Excel.Export
                     else if (string.IsNullOrEmpty(cell.Display)) continue;
                     else
                     {
-                        var size = sizePlanar[x, y];
+                        var size = sizeTextPlanar[x, y];
                         if (size.Height == 0) continue;
                         var mw = widths.Skip(x).Take(cell.Colspan + 1).Sum();
                         //重新获取一次尺寸
@@ -251,19 +250,13 @@ namespace Common.Excel.Export
                             if ((cell.WhiteSpace != null ? cell.WhiteSpace.Value : ExcelStyle.WhiteSpace) == Consts.WhiteSpace.Wrap)
                             {
                                 size = CalcRequireSize(cellPlanar[x, y], graphics, mw);
-                                sizePlanar[x, y] = size;
+                                sizeTextPlanar[x, y] = size;
                             }
                         }
                     }
                 }
             }
-
-            for (int y = 0; y < rowCount; y++)
-            {
-                //计算各个行需要的高度
-                var arr = GetRow(sizePlanar, y);
-                requireHeights[y] = arr.Select(p => p.Height).Max();
-            }
+            
             for (int y = 0; y < rowCount; y++)
             {
                 //排除跨行的单元格，计算出要多大的高度
@@ -273,8 +266,16 @@ namespace Common.Excel.Export
                     var cell = cellPlanar[x, y];
                     if (cell == null) continue;
                     if (cell.Rowspan > 0) continue;
-                    var size = sizePlanar[x, y];
-                    if (size.Height > 0) ih = Math.Max(ih, size.Height);
+                    var size = sizeTextPlanar[x, y];
+                    ih = Math.Max(ih, size.Height);
+                    if (cell.MinHeight > 0)
+                        ih = Math.Max(ih, cell.MinHeight);
+                    else
+                        ih = Math.Max(ih, ExcelStyle.MinRowHeight);
+                    if (cell.MaxHeight > 0)
+                        ih = Math.Min(ih, cell.MaxHeight);
+                    else
+                        ih = Math.Min(ih, ExcelStyle.MaxRowHeight);
                 }
                 heights[y] = ih;
             }
@@ -289,7 +290,7 @@ namespace Common.Excel.Export
                     if (cell.Rowspan == 0) continue;
                     if (cell.RowIndex != y) continue;//跨行单元格的延伸单元格
                     if (cell.ColIndex != x) continue;
-                    var size = sizePlanar[x, y];
+                    var size = sizeTextPlanar[x, y];
                     if (size.Height == 0) continue;
                     if (size.Height <= availbleHeights[y]) continue;
                     list.Add(new Tuple<Cell, Size, int>(cell, size, x));
@@ -402,13 +403,12 @@ namespace Common.Excel.Export
             if (italic) fontStyle = FontStyle.Italic;
             if (bold) fontStyle = FontStyle.Bold;
             var font = new Font(fontFamily, fontSize, fontStyle, GraphicsUnit.Point);
-            //fontSize = Unit.Pound2Pixel(fontSize,Unit.GetDpi());
             var sz = graphics.MeasureString(text, font, maxWidth);
             //graphics.PageUnit = cell.FontUnit;
-             var size = new Size((int)sz.Width, (int)sz.Height);
-            //var size = new Size((int)sz.Width * 9 / 10, (int)sz.Height);
-            //if (cell.Width > cell.MinWidth && cell.Width < cell.MaxWidth && cell.Width > size.Width) size.Width = cell.Width;
-            //if (cell.Height > cell.MinHeight && cell.Height < cell.MaxHeight && cell.Height > size.Height) size.Height = cell.Height;
+            var fontHeight = font.GetHeight(graphics);
+            int lineCount =(int) Math.Round(sz.Height / fontHeight);
+            int verPadding = (int)(fontHeight / 10) + 1;//加点偏距
+            var size = new Size((int)sz.Width, (int)sz.Height + lineCount * verPadding);
             return size;
         }
         //是否为表达式、公式单元格

@@ -10,20 +10,49 @@ namespace Common.Excel.Export.Models
 {
     public class Cell
     {
+        object value;
+        string format;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="value">若传入null,则单元格数据格式默认为string,如有需要则强制指定Style</param>
         public Cell(object value)
         {
-            SetValue(value,null);
-            //FontUnit = GraphicsUnit.Point;//单位
+            Init(value);
         }
-        public Cell(object value, int rowIndex, int colIndex)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="rowIndex">行索引（从0开始）</param>
+        /// <param name="colIndex">列索引（从0开始）</param>
+        public Cell(object value, int colIndex, int rowIndex)
+        {
+            Init(value, colIndex, rowIndex);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="rowIndex">行索引（从0开始）</param>
+        /// <param name="colIndex">列索引（从0开始）</param>
+        public Cell(object value, int colIndex, int rowIndex, int colspan, int rowspan)
+            : this(value, colIndex, rowIndex)
+        {
+            Init(value, colIndex, rowIndex, colspan,rowspan);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="xNo">传入Excel列号，从A开始</param>
+        /// <param name="yNo">传入Excel行号，从1开始</param>
+        public Cell(object value, string xNo, int yNo)
             : this(value)
         {
-            RowIndex = rowIndex;
-            ColIndex = colIndex;
+            var colIndex = ColNoToInt(xNo);
+            var rowIndex = yNo - 1;
+            Init(value, colIndex, rowIndex);
         }
         /// <summary>
         /// 
@@ -31,28 +60,89 @@ namespace Common.Excel.Export.Models
         /// <param name="value"></param>
         /// <param name="xNo">传入Excel列号，从A开始，只接受大写字母</param>
         /// <param name="yNo">传入Excel行号，从1开始</param>
-        public Cell(object value, string xNo, int yNo)
-            : this(value)
+        public Cell(object value, string xNoFrom, int yNoFrom, string xNoTo, int yNoTo) : this(value, xNoFrom, yNoTo)
         {
-            Contract.Assert(!string.IsNullOrEmpty(xNo) || xNo.Length < 3);
-            Contract.Assert(yNo > 0);
-            int index = 0;
-            for (int i = 0; i < xNo.Length; i++)
-            {
-                var ch = xNo[i];
-                if (ch < 'A' || ch > 'Z') throw new ArgumentException();
-                index *= 25;
-                index += (int)(ch - 'A');
-            }
-            ColIndex = index;
-            RowIndex = yNo + 1;
+            var colIndex = ColNoToInt(xNoFrom);
+            var rowIndex = yNoFrom - 1;
+            var rowspan = yNoTo - yNoFrom;
+            var index = ColNoToInt(xNoTo);
+            var colspan = index - ColIndex;
+            Init(value, colIndex, rowIndex, colspan, rowspan);
         }
-        public string Style { get; private set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="cell"></param>
+        public Cell(object value, string cell)
+        {
+            var position = NoToPosition(cell);
+            var colIndex = position.X;
+            var rowIndex = position.Y;
+            Init(value, colIndex, rowIndex);
+        }
+        public Cell(object value, string start, string end)
+        {
+            var position = NoToPosition(start);
+            var positionEnd = NoToPosition(end);
+            var colIndex = position.X;
+            var rowIndex = position.Y;
+            var rowspan = positionEnd.Y - position.Y;
+            var colspan = positionEnd.X - position.X;
+            Init(value, colIndex, rowIndex, colspan, rowspan);
+        }
+
+        public void Init(object value)
+        {
+            Value = value;
+            //FontUnit = GraphicsUnit.Point;//单位
+        }
+        public void Init(object value, int colIndex, int rowIndex)
+        {
+            Contract.Assert(colIndex >= 0);
+            Contract.Assert(rowIndex >= 0);
+            Init(value);
+            RowIndex = rowIndex;
+            ColIndex = colIndex;
+        }
+        public void Init(object value, int colIndex, int rowIndex, int colspan, int rowspan)
+        {
+            Contract.Assert(colspan >= 0);
+            Contract.Assert(rowspan >= 0);
+            Init(value, colIndex, rowIndex);
+            Colspan = colspan;
+            Rowspan = rowspan;
+        }
+        public string Format { get;set; }
         /// <summary>
         /// 公式、表达式,需要设计表单式
         /// </summary>
-        public string Formula { get; set; }
-        public object Value { get; private set; }
+        public string Formula
+        {
+            get { return format; }
+            set
+            {
+                format = value;
+                UpdateDisplay();
+            }
+        }
+        public object Value
+        {
+            get { return value; }
+            set
+            {
+                this.value = value;
+                //注:这里的Style是最终写入到Excel的，跟字符串Format无关系
+                if (value != null)
+                {
+                    if (string.IsNullOrEmpty(Format))
+                    {
+                        if (value is DateTime) Format = "yyyy/MM/dd";
+                    }
+                }
+                UpdateDisplay();
+            }
+        }
         /// <summary>
         /// Value最终可视的效果
         /// </summary>
@@ -89,6 +179,10 @@ namespace Common.Excel.Export.Models
         /// </summary>
         public int Rowspan { get; set; }
 
+        public Consts.BorderStyle BorderStyle { get; set; }
+
+        public Color? BorderColor { get; set; }
+
         public Consts.TextAlign? TextAlign { get; set; }
 
         #region 字体相关属性
@@ -114,64 +208,7 @@ namespace Common.Excel.Export.Models
         /// </summary>
         public Consts.WhiteSpace? WhiteSpace { get; set; }
         #endregion
-
-        public string SetValue(object value, string style)
-        {
-            Value = value;
-            if (!string.IsNullOrEmpty(style))
-            {
-                Style = style;
-            }
-            //注:这里的Style是最终写入到Excel的，跟字符串Format无关系
-            if (value != null)
-            {
-                string format = string.Empty;
-
-                if (!string.IsNullOrEmpty(Style))
-                {
-                    //todo 根据数据类型，给出默认Style
-                }
-                if (!string.IsNullOrEmpty(Style))
-                {
-                    //todo 根据Style，给出format
-                }
-                else
-                {
-                    if (value is DateTime) format = "yyyy/MM/dd";
-                }
-                if (value is string)
-                    Display = (string)value;
-                else if (value is DateTime)
-                    Display = ((DateTime)value).ToString(format);
-                else if (value is int)
-                    Display = ((int)value).ToString(format);
-                else if (value is uint)
-                    Display = ((uint)value).ToString(format);
-                else if (value is long)
-                    Display = ((long)value).ToString(format);
-                else if (value is ulong)
-                    Display = ((ulong)value).ToString(format);
-                else if (value is float)
-                    Display = ((float)value).ToString(format);
-                else if (value is double)
-                    Display = ((double)value).ToString(format);
-                else if (value is decimal)
-                    //货币要根据Style处理
-                    throw new NotImplementedException();
-                else if (value is bool)
-                    //遇到需要将bool转化为 Man/Female, 是/否这种，应该额外提供FormatProvider
-                    throw new NotImplementedException();
-                else
-                    throw new NotImplementedException();
-            }
-            else
-            {
-                Display = string.Empty;
-                //todo 配置默认格式
-                throw new NotImplementedException();
-            }
-            return Display;
-        }
+        
         /// <summary>
         /// 
         /// </summary>
@@ -200,6 +237,7 @@ namespace Common.Excel.Export.Models
         {
             return GetExcelWidth(Width);
         }
+
         public static int GetPixelHeight(int value)
         {
             return (int)Math.Round(Unit.Pound2Pixel(value, Unit.GetDpi()));
@@ -227,6 +265,93 @@ namespace Common.Excel.Export.Models
         {
             //todo 是否要根据DPI计算
             return 5.25f;
+        }
+
+        private int ColNoToInt(string xNo)
+        {
+            Contract.Assert(!string.IsNullOrEmpty(xNo) && xNo.Length < 3);
+            xNo = xNo.ToUpper();
+            int x = 0;
+            for (int i = 0; i < xNo.Length; i++)
+            {
+                var ch = xNo[i];
+                if (ch >= 'A' && ch <= 'Z')
+                {
+                    x *= 26;
+                    x += (ch - 'A');
+                }
+                else
+                {
+                    throw new ArgumentException();
+                }
+            }
+            return x;
+        }
+
+        /// <summary>
+        /// C1这种转为对应索引
+        /// </summary>
+        /// <param name="no"></param>
+        /// <returns></returns>
+        private Point NoToPosition(string no)
+        {
+            Contract.Assert(!string.IsNullOrEmpty(no) && no.Length > 1);
+            no = no.ToUpper();
+            int x = 0, y = 0;
+            for (int i = 0; i < no.Length; i++)
+            {
+                var ch = no[i];
+                if (ch >= 'A' && ch <= 'Z')
+                {
+                    x *= 26;
+                    x += (ch - 'A');
+                }
+                else if (ch >= '0' && ch <= '9')
+                {
+                    y *= 10;
+                    y += (ch - '0');
+                }
+                else
+                {
+                    throw new ArgumentException();
+                }
+            }
+            return new Point(x, y - 1);
+        }
+
+        private void UpdateDisplay()
+        {
+            if (value == null)
+            {
+                Display = string.Empty;
+            }
+            else if (string.IsNullOrEmpty(format)) {
+                Display = value.ToString();
+            }
+            else if (value is string)
+                Display = (string)value;
+            else if (value is DateTime)
+                Display = ((DateTime)value).ToString(Format);
+            else if (value is int)
+                Display = ((int)value).ToString(Format);
+            else if (value is uint)
+                Display = ((uint)value).ToString(Format);
+            else if (value is long)
+                Display = ((long)value).ToString(Format);
+            else if (value is ulong)
+                Display = ((ulong)value).ToString(Format);
+            else if (value is float)
+                Display = ((float)value).ToString(Format);
+            else if (value is double)
+                Display = ((double)value).ToString(Format);
+            else if (value is decimal)
+                //货币要根据Style处理
+                throw new NotImplementedException();
+            else if (value is bool)
+                //遇到需要将bool转化为 Man/Female, 是/否这种，应该额外提供FormatProvider
+                throw new NotImplementedException();
+            else
+                throw new NotImplementedException();
         }
     }
 }

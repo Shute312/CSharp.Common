@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Encode\Crc.cs" />
     <Compile Include="Encode\Poly.cs" />
+    <Compile Include="Excel\Demo.cs" />
     <Compile Include="Excel\Export\ExportHelper.cs" />
     <Compile Include="Excel\Export\Consts.cs" />
     <Compile Include="Excel\Export\ExcelExport.cs" />

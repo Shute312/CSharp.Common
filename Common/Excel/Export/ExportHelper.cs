@@ -20,6 +20,16 @@ namespace Common.Excel.Export
             sheet.Cells.Style.Font.Italic = excelStyle.Italic;
             sheet.Cells.Style.Font.Size = excelStyle.FontSize;
             sheet.Cells.Style.Font.Name = excelStyle.FontFamily.Name;
+            sheet.Cells.Style.VerticalAlignment = GetVerAlign(excelStyle.TextAlign);
+            sheet.Cells.Style.HorizontalAlignment = GetHorAlign(excelStyle.TextAlign);
+            //背景色一次性设置会有点问题
+            //sheet.Cells.Style.Fill.PatternType = ExcelFillStyle.DarkGrid;
+            //sheet.Cells.Style.Fill.BackgroundColor.SetColor(excelStyle.BackgroundColor);
+            //不能一次性设置
+            //if (excelStyle.BorderStyle != Consts.BorderStyle.None && excelStyle.BorderColor != null)
+            //{
+            //    sheet.Cells.Style.Border.BorderAround((ExcelBorderStyle)((int)excelStyle.BorderStyle), excelStyle.BorderColor.Value);
+            //}
             foreach (var cell in cells)
             {
                 var rowNo = cell.RowIndex + 1;
@@ -27,16 +37,49 @@ namespace Common.Excel.Export
                 var excelRange = GetRange(cell, sheet);
                 if (cell.Colspan > 0 || cell.Rowspan > 0) excelRange.Merge = true;//合并单元格
                 //文本对齐方式
-                excelRange.Style.VerticalAlignment = GetVerAlign(cell, excelStyle);
-                excelRange.Style.HorizontalAlignment = GetHorAlign(cell, excelStyle);
+                if (cell.TextAlign != null)
+                {
+                    excelRange.Style.VerticalAlignment = GetVerAlign(cell.TextAlign.Value);
+                    excelRange.Style.HorizontalAlignment = GetHorAlign(cell.TextAlign.Value);
+                }
                 sheet.SetValue(rowNo, colNo, cell.Value);
                 sheet.Row(rowNo).CustomHeight = true;//手动调节行高
                 excelRange.Style.WrapText = true;//自动换行
+                //是否泄题
                 if(cell.Italic!=null) excelRange.Style.Font.Italic = cell.Italic.Value;
+                //是否粗体
                 if(cell.Bold!=null) excelRange.Style.Font.Bold = cell.Bold.Value;
+                //文本颜色
                 if (cell.FontColor != null) excelRange.Style.Font.Color.SetColor(cell.FontColor.Value);
+                //字号
                 if (cell.FontSize != null) excelRange.Style.Font.Size = cell.FontSize.Value;
+                //字体
                 if (cell.FontFamily != null) excelRange.Style.Font.Name = cell.FontFamily.Name;
+                //数值显示格式
+                if (!string.IsNullOrEmpty(cell.Format)) excelRange.Style.Numberformat.Format = cell.Format;
+                //公式
+                if (!string.IsNullOrEmpty(cell.Formula)) excelRange.Formula = cell.Formula;
+                //背景色
+                if (cell.BackgroundColor != null)
+                {
+                    excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    excelRange.Style.Fill.BackgroundColor.SetColor(cell.BackgroundColor.Value);
+                }
+                else if (excelStyle.BackgroundColor != null && excelStyle.BackgroundColor.Value != System.Drawing.Color.White)
+                {
+                    excelRange.Style.Fill.PatternType = ExcelFillStyle.DarkGrid;
+                    excelRange.Style.Fill.BackgroundColor.SetColor(excelStyle.BackgroundColor.Value);
+                }
+                //边框
+                if (cell.BorderStyle != Consts.BorderStyle.None && cell.BorderColor != null)
+                {
+                    excelRange.Style.Border.BorderAround((ExcelBorderStyle)((int)cell.BorderStyle), cell.BorderColor.Value);
+                }
+                else if (excelStyle.BorderStyle != Consts.BorderStyle.None && excelStyle.BorderColor != null)
+                {
+                    excelRange.Style.Border.BorderAround((ExcelBorderStyle)((int)excelStyle.BorderStyle), excelStyle.BorderColor.Value);
+                }
+
                 sheet.Row(rowNo).Height = cell.GetExcelHeight();//设置行高
                 sheet.Column(colNo).Width = cell.GetExcelWidth();//设置列宽
             }
@@ -52,17 +95,15 @@ namespace Common.Excel.Export
                 return sheet.Cells[rowNo, colNo];
         }
 
-        private ExcelHorizontalAlignment GetHorAlign(Models.Cell cell,Models.ExcelStyle excelStyle)
+        private ExcelHorizontalAlignment GetHorAlign(Consts.TextAlign align)
         {
-            var align = cell.TextAlign != null ? cell.TextAlign : excelStyle.TextAlign;
             var value = ((int)align) %3;
             if (value == 0) return ExcelHorizontalAlignment.Left;
             else if (value == 1) return ExcelHorizontalAlignment.Center;
             else return ExcelHorizontalAlignment.Right;
         }
-        private ExcelVerticalAlignment GetVerAlign(Models.Cell cell, Models.ExcelStyle excelStyle)
+        private ExcelVerticalAlignment GetVerAlign(Consts.TextAlign align)
         {
-            var align = cell.TextAlign != null ? cell.TextAlign : excelStyle.TextAlign;
             var value = ((int)align) / 3;
             if (value == 0) return ExcelVerticalAlignment.Top;
             else if (value == 1) return ExcelVerticalAlignment.Center;
