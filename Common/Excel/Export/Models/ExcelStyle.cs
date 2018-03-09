@@ -13,7 +13,7 @@ namespace Common.Excel.Export.Models
             MinColWidth = 60;
             MaxColWidth = 200;
             MinRowHeight = 24;
-            MaxRowHeight = 50;
+            MaxRowHeight = 100;
 
             //字体
             FontColor = Color.Black;

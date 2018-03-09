@@ -20,7 +20,7 @@ namespace Common
         [STAThread]
         static void Main()
         {
-            Demo.TestAutoLayout();
+            Demo.TestLayout();
         }
 
     }
