@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -22,6 +23,34 @@ namespace Common.ExtensionMethods
             if (buff == null) return null;
             if (buff.Length == 0) return new MemoryStream();
             return new MemoryStream(buff);
+        }
+
+        public static void Skip(this Stream stream, int byteCount)
+        {
+            Contract.Assert(byteCount>-1);
+            if (byteCount == 0) return;
+            if (stream.CanSeek)
+            {
+                stream.Position += byteCount;
+            }
+            else
+            {
+                int remain = byteCount;
+                const int BLOCK_SIZE = 1024;
+                while (remain > 0)
+                {
+                    byte[] buff;
+                    if (remain > BLOCK_SIZE)
+                    {
+                        buff = new byte[BLOCK_SIZE];
+                        remain -= BLOCK_SIZE;
+                    }
+                    else {
+                        buff = new byte[remain];
+                    }
+                    stream.Read(buff, 0, buff.Length);
+                }
+            }
         }
     }
 }

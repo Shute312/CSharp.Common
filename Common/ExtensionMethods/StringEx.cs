@@ -49,5 +49,37 @@ namespace Common.ExtensionMethods
             if (str.Length == 0) return new byte[0];
             return encoding.GetBytes(str);
         }
+
+        public static int ParseInt(this string str, int defaultValue)
+        {
+            int value;
+            if (int.TryParse(str, out value)) return value;
+            return defaultValue;
+        }
+
+        public static int ParseHexInt(this string str, int defaultValue)
+        {
+            if (string.IsNullOrEmpty(str)) return defaultValue;
+            int value = 0;
+            foreach (var ch in str)
+            {
+                value <<= 4;
+                if (ch >= '0' && ch <= '9')
+                {
+                    value &= (int)(ch - '0');
+                }
+                else if (ch >= 'a' && ch <= 'f')
+                {
+                    value &= ((int)(ch - 'a') + 10);
+                }
+                else if (ch >= 'A' && ch <= 'F')
+                {
+                    value &= ((int)(ch - 'A') + 10);
+                }
+                else return defaultValue;
+            }
+            return value;
+        }
+
     }
 }

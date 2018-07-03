@@ -1,19 +1,33 @@
-﻿using Common.Excel.Export;
-using Common.Excel.Export.Models;
+﻿using Common.Excel.Export.Models;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Common.Excel
+namespace Common.Excel.Export
 {
     public class Demo
     {
-        public static void TestAutoLayout() {
+        public static void TestFormat()
+        {
+            string localFilePath = "D:\\Format.xlsx";
+
+            ExcelPackage package = null;
+            package = new ExcelPackage();
+            package.Load(new FileStream(localFilePath, FileMode.Open));
+            var sheet = package.Workbook.Worksheets[1];
+            var rowCount = sheet.Dimension.Rows;
+            var colCount = sheet.Dimension.Columns;
+            for (var c = 0; c < colCount; c++)
+            {
+                var cell = sheet.Cells[2, c + 1];
+                var format = cell.Style.Numberformat;
+                var id = format.NumFmtID;
+            }
+        }
+        public static void TestAutoLayout()
+        {
 
             string localFilePath = "D:\\进仓记录.xlsx";
             ExcelExport export = new ExcelExport();
@@ -24,8 +38,8 @@ namespace Common.Excel
             excelStyle.BorderStyle = Consts.BorderStyle.Thin;
 
             List<Cell> list = new List<Cell>();
-            list.Add(new Cell("验货室RFID进仓管控表格", "A1", "o1") { FontSize = 24,TextAlign = Consts.TextAlign.BottomCenter});
-            list.Add(new Cell("进仓记录", "A2", "O2") { MinHeight=40});
+            list.Add(new Cell("验货室RFID进仓管控表格", "A1", "o1") { FontSize = 24, TextAlign = Consts.TextAlign.BottomCenter });
+            list.Add(new Cell("进仓记录", "A2", "O2") { MinHeight = 40 });
             list.Add(new Cell("鞋型名称", 0, 2));
             list.Add(new Cell("制令号", 1, 2));
             list.Add(new Cell("ART", 2, 2));
@@ -48,7 +62,7 @@ namespace Common.Excel
                 package = new ExcelPackage();
                 var sheetName = "Sheet1";
                 var sheet = package.Workbook.Worksheets.Add(sheetName);
-                export.Export(list, sheet,excelStyle);//不需要修改整体样式时，不需要传递excelStyle
+                export.Export(list, sheet, excelStyle);//不需要修改整体样式时，不需要传递excelStyle
                 FileInfo f = new FileInfo(localFilePath);
                 package.SaveAs(f);
                 System.Diagnostics.Process.Start(localFilePath);
@@ -77,8 +91,8 @@ namespace Common.Excel
 
             List<Cell> list = new List<Cell>();
             list.Add(new Cell("工艺工段", "A1", "N1") { MaxHeight = 18, MinHeight = 18 });
-            list.Add(new Cell("计划开始生产时间", 0, 1) { TextAlign= Consts.TextAlign.BottomCenter});
-            list.Add(new Cell("工艺厂商", 1, 1) { BackgroundColor = Color.Yellow});
+            list.Add(new Cell("计划开始生产时间", 0, 1) { TextAlign = Consts.TextAlign.BottomCenter });
+            list.Add(new Cell("工艺厂商", 1, 1) { BackgroundColor = Color.Yellow });
             list.Add(new Cell("工艺部件", 2, 1) { BackgroundColor = Color.Yellow });
             list.Add(new Cell("工艺发出时间", 3, 1));
             list.Add(new Cell("工艺发出数量", 4, 1));
@@ -179,7 +193,8 @@ namespace Common.Excel
                 sheet.Cells[1, 1].Style.WrapText = true;
                 sheet.SetValue(1, 1, "我站在北京天安门广场观看升国旗");
                 sheet.Cells[1, 1, 2, 1].Merge = true;
-                sheet.SetValue(1, 2, "我站在北京天安门广场观看升国旗,五星红旗随风飘扬");
+                sheet.SetValue(1, 2, "我站在北京天安门广场观看升国旗，五星红旗随风飘扬");
+                sheet.Cells[1, 2].AutoFitColumns();
                 sheet.Cells[1, 2, 1, 4].Merge = true;
                 sheet.SetValue(1, 5, DateTime.Now);
                 sheet.SetValue(2, 2, "2,2");
@@ -192,7 +207,7 @@ namespace Common.Excel
                 sheet.SetValue(3, 7, "测试宽度是否会自动撑开");
                 sheet.Column(8).Width = 15;
 
-                sheet.SetValue(4, 8, "测试高度是否会自动撑开");//设置列宽，配置可换行后，可以撑开高度
+                sheet.SetValue(4, 8, "测试带有换行符的高度\r\n是否会\r\n自动撑开");//设置列宽，配置可换行后，可以撑开高度
                 sheet.Cells[4, 8].Style.WrapText = true;
 
                 FileInfo f = new FileInfo(localFilePath);

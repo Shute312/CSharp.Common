@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Common.IO
 {
@@ -32,6 +33,25 @@ namespace Common.IO
             //其他情况
             return defaultWeb;
         }
+
+        /// <summary>
+        /// 转为绝对路径
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static string ToAbsPath(string filePath)
+        {
+            Contract.Assert(!string.IsNullOrEmpty(filePath));
+            //本地路径
+            var index = filePath.IndexOf(":\\");
+            if (index > 0 && index < 10) return filePath;
+
+            //服务器路径转为本地磁盘绝对路径
+            if (HttpContext.Current != null) return HttpContext.Current.Request.MapPath(filePath);
+            if (filePath.StartsWith("~/")) return HttpRuntime.AppDomainAppPath + filePath.Substring(1);
+            else return Path.Combine(HttpRuntime.AppDomainAppPath + filePath);
+        }
+
         /// <summary>
         /// 保存文件，写入失败时，不会影响原有文件
         /// </summary>

@@ -39,6 +39,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -48,9 +49,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Decode\LZWDecoder.cs" />
     <Compile Include="Encode\Crc.cs" />
     <Compile Include="Encode\Poly.cs" />
-    <Compile Include="Excel\Demo.cs" />
+    <Compile Include="Excel\Export\Demo.cs" />
     <Compile Include="Excel\Export\ExportHelper.cs" />
     <Compile Include="Excel\Export\Consts.cs" />
     <Compile Include="Excel\Export\ExcelExport.cs" />
@@ -63,8 +65,17 @@
     <Compile Include="Excel\Helper.cs" />
     <Compile Include="Excel\Unit.cs" />
     <Compile Include="ExtensionMethods\EnumerableEx.cs" />
+    <Compile Include="ExtensionMethods\IQueryableEx.cs" />
     <Compile Include="ExtensionMethods\StreamEx.cs" />
     <Compile Include="ExtensionMethods\StringEx.cs" />
+    <Compile Include="ExtensionMethods\ValueEx.cs" />
+    <Compile Include="Images\Cmyk.cs" />
+    <Compile Include="Images\Tiff\DirectoryEntry.cs" />
+    <Compile Include="Images\Tiff\Enums.cs" />
+    <Compile Include="Images\Tiff\ImageFileDirection.cs" />
+    <Compile Include="Images\Tiff\ImageFileHeader.cs" />
+    <Compile Include="Images\Tiff\Strip.cs" />
+    <Compile Include="Images\Tiff\TiffDecode.cs" />
     <Compile Include="IO\FileUtils.cs" />
     <Compile Include="IO\StreamEx.cs" />
     <Compile Include="Program.cs" />
@@ -76,7 +87,6 @@
     <Compile Include="Serialization\Json.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Decode\" />
     <Folder Include="Http\" />
   </ItemGroup>
   <ItemGroup>

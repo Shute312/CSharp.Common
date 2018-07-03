@@ -380,9 +380,9 @@ namespace Common.Excel.Export
             var fontSize = cell.FontSize == null ? ExcelStyle.FontSize : cell.FontSize.Value;
             bool bold = cell.Bold == null ? ExcelStyle.Bold : cell.Bold.Value;
             bool italic = cell.Italic == null ? ExcelStyle.Italic : cell.Italic.Value;
-            FontStyle fontStyle = FontStyle.Regular;//似乎无法设置粗斜体
-            if (italic) fontStyle = FontStyle.Italic;
-            if (bold) fontStyle = FontStyle.Bold;
+            var fontStyle = FontStyle.Regular;
+            if (italic) fontStyle |= FontStyle.Italic;
+            if (bold) fontStyle |= FontStyle.Bold;
             var font = new Font(fontFamily, fontSize, fontStyle, GraphicsUnit.Point);
             var sz = graphics.MeasureString(text, font, maxWidth);
             //graphics.PageUnit = cell.FontUnit;

@@ -12,6 +12,10 @@ namespace Common.Excel.Export.Models
     {
         object value;
         string format;
+
+        public const int MAX_COL = 1000;
+        public const int MAX_ROW = 10000;
+
         /// <summary>
         /// 
         /// </summary>
@@ -76,15 +80,15 @@ namespace Common.Excel.Export.Models
         /// <param name="cell"></param>
         public Cell(object value, string cell)
         {
-            var position = NoToPosition(cell);
+            var position = CellAddressToPosition(cell);
             var colIndex = position.X;
             var rowIndex = position.Y;
             Init(value, colIndex, rowIndex);
         }
         public Cell(object value, string start, string end)
         {
-            var position = NoToPosition(start);
-            var positionEnd = NoToPosition(end);
+            var position = CellAddressToPosition(start);
+            var positionEnd = CellAddressToPosition(end);
             var colIndex = position.X;
             var rowIndex = position.Y;
             var rowspan = positionEnd.Y - position.Y;
@@ -102,6 +106,8 @@ namespace Common.Excel.Export.Models
             Contract.Assert(colIndex >= 0);
             Contract.Assert(rowIndex >= 0);
             Init(value);
+            if (rowIndex >= MAX_ROW) throw new ArgumentException();
+            if (colIndex >= MAX_COL) throw new ArgumentException();
             RowIndex = rowIndex;
             ColIndex = colIndex;
         }
@@ -110,10 +116,14 @@ namespace Common.Excel.Export.Models
             Contract.Assert(colspan >= 0);
             Contract.Assert(rowspan >= 0);
             Init(value, colIndex, rowIndex);
+            if (rowspan >= MAX_ROW) throw new ArgumentException();
+            if (colspan >= MAX_COL) throw new ArgumentException();
             Colspan = colspan;
             Rowspan = rowspan;
         }
         public string Format { get;set; }
+
+        public string Address { get { return CellPositionToAddress(this.ColIndex, this.RowIndex); } }
         /// <summary>
         /// 公式、表达式,需要设计表单式
         /// </summary>
@@ -269,7 +279,7 @@ namespace Common.Excel.Export.Models
 
         private int ColNoToInt(string xNo)
         {
-            Contract.Assert(!string.IsNullOrEmpty(xNo) && xNo.Length < 3);
+            Contract.Assert(!string.IsNullOrEmpty(xNo));
             xNo = xNo.ToUpper();
             int x = 0;
             for (int i = 0; i < xNo.Length; i++)
@@ -293,30 +303,52 @@ namespace Common.Excel.Export.Models
         /// </summary>
         /// <param name="no"></param>
         /// <returns></returns>
-        private Point NoToPosition(string no)
+        public static Point CellAddressToPosition(string no)
         {
             Contract.Assert(!string.IsNullOrEmpty(no) && no.Length > 1);
             no = no.ToUpper();
             int x = 0, y = 0;
+            int xLength = 0;
             for (int i = 0; i < no.Length; i++)
             {
                 var ch = no[i];
                 if (ch >= 'A' && ch <= 'Z')
                 {
                     x *= 26;
-                    x += (ch - 'A');
+                    x += ((ch - 'A')+1);
+                    xLength++;
                 }
-                else if (ch >= '0' && ch <= '9')
+                else {
+                    break;
+                }
+            }
+            if (xLength == 0 || xLength == no.Length) throw new ArgumentException();
+
+            if(!int.TryParse(no.Substring(xLength),out y))
+            {
+                throw new ArgumentException();
+            }
+            return new Point(x-1, y - 1);
+        }
+
+        public static string CellPositionToAddress(int xIndex, int yIndex)
+        {
+            var x = xIndex + 1;
+            string value = string.Empty;
+            while (x > 0)
+            {
+                if (x > 26)
                 {
-                    y *= 10;
-                    y += (ch - '0');
+                    value += (char)((ushort)'A' - 1 + (x / 26));
+                    x = x - (x / 26) * 26;
                 }
                 else
                 {
-                    throw new ArgumentException();
+                    value += (char)((ushort)'A' - 1 + x);
+                    x = 0;
                 }
             }
-            return new Point(x, y - 1);
+            return value + (yIndex + 1);
         }
 
         private void UpdateDisplay()
