@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Common.Images.Tiff
 {
-    public enum DataType
+    internal enum DataType
     {
         /// <summary>
         /// 8位无标记整数
@@ -36,7 +36,7 @@ namespace Common.Images.Tiff
         Double = 12,
     }
 
-    public enum Tag
+    internal enum Tag
     {
         /// <summary>
         ///  每字节的数据，其位的排列方式,1 从左到右,2 从右到左
@@ -190,6 +190,7 @@ namespace Common.Images.Tiff
 
         /// <summary>
         /// SubfileType 已经由NewSubfileType标签取代
+        /// (Long类型)
         /// </summary>
         SubfileType = 255,
 
@@ -282,6 +283,11 @@ namespace Common.Images.Tiff
         /// (Byte\Short类型)
         /// </summary>
         DotRange = 336,
+
+        /// <summary>
+        /// A mathematical operator that is applied to the image data before an encoding scheme is applied.
+        /// </summary>
+        Predictor = 317,
 
         #region Named by Shute
 

@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Decode\LZWDecoder.cs" />
     <Compile Include="Encode\Crc.cs" />
+    <Compile Include="Encode\LZWEncoder.cs" />
     <Compile Include="Encode\Poly.cs" />
     <Compile Include="Excel\Export\Demo.cs" />
     <Compile Include="Excel\Export\ExportHelper.cs" />
@@ -70,12 +71,17 @@
     <Compile Include="ExtensionMethods\StringEx.cs" />
     <Compile Include="ExtensionMethods\ValueEx.cs" />
     <Compile Include="Images\Cmyk.cs" />
+    <Compile Include="Images\Cmyk256.cs" />
+    <Compile Include="Images\ColorMode.cs" />
+    <Compile Include="Images\Frame.cs" />
+    <Compile Include="Images\Tiff\Properties.cs" />
+    <Compile Include="Images\Tiff\BitmapTiff.cs" />
     <Compile Include="Images\Tiff\DirectoryEntry.cs" />
     <Compile Include="Images\Tiff\Enums.cs" />
     <Compile Include="Images\Tiff\ImageFileDirection.cs" />
     <Compile Include="Images\Tiff\ImageFileHeader.cs" />
-    <Compile Include="Images\Tiff\Strip.cs" />
     <Compile Include="Images\Tiff\TiffDecode.cs" />
+    <Compile Include="Images\Tiff\TiffEncode.cs" />
     <Compile Include="IO\FileUtils.cs" />
     <Compile Include="IO\StreamEx.cs" />
     <Compile Include="Program.cs" />
@@ -88,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Http\" />
+    <Folder Include="Images\Colors\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

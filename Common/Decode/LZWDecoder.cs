@@ -18,7 +18,7 @@ namespace Common.Decode
     /// </summary>
     sealed class LZWDecoder
     {
-        private const int StackSize = 4096;
+        /*private const int StackSize = 4096;
         private const int NullCode = -1;
 
         private Stream _stream;
@@ -225,6 +225,135 @@ namespace Common.Decode
             _stream.Read(buffer, 0, length);
 
             return buffer;
+        }*/
+
+        private const int LZW_STACK_SIZE = 4096;
+        private const int LZW_NULL_CODE = -1;
+        public byte[] DecodePixels(Stream stream, int width, int height, int dataSize)
+        {
+            byte[] pixels = new byte[width * height];
+            int clearCode = 1 << dataSize;
+            if (dataSize == Int32.MaxValue)
+            {
+                return null;
+            }
+            int codeSize = dataSize + 1;
+            int endCode = clearCode + 1;
+            int availableCode = clearCode + 2;
+
+            int code = LZW_NULL_CODE;
+            int old_code = LZW_NULL_CODE;
+            int code_mask = (1 << codeSize) - 1;
+            int bits = 0;
+
+            int[] prefix = new int[LZW_STACK_SIZE];
+            int[] suffix = new int[LZW_STACK_SIZE];
+            int[] pixelStatck = new int[LZW_STACK_SIZE + 1];
+
+            int top = 0;
+            int count = 0;
+            int bi = 0;
+            int xyz = 0;
+
+            int data = 0;
+            int first = 0;
+            int inCode = LZW_NULL_CODE;
+            for (code = 0; code < clearCode; code++)
+            {
+                prefix[code] = 0;
+                suffix[code] = (byte)code;
+            }
+
+            byte[] buffer = null;
+            while (xyz < pixels.Length)
+            {
+                if (top == 0)
+                {
+                    if (bits < codeSize)
+                    {
+                        if (count == 0)
+                        {
+                            int blockSize = stream.ReadByte();
+                            buffer = new byte[blockSize];
+                            if (!readStream(stream, buffer))
+                            {
+                                break;
+                            }
+                            count = buffer.Length;
+                            if (count == 0)
+                            {
+                                break;
+                            }
+                            bi = 0;
+                        }
+                        data += buffer[bi] << bits;
+                        bits += 8;
+                        bi++;
+                        count--;
+                        continue;
+                    }
+                    code = data & code_mask;
+                    data >>= codeSize;
+                    bits -= codeSize;
+                    if (code > availableCode || code == endCode)
+                    {
+                        break;
+                    }
+                    if (code == clearCode)
+                    {
+                        codeSize = dataSize + 1;
+                        code_mask = (1 << codeSize) - 1;
+                        availableCode = clearCode + 2;
+                        old_code = LZW_NULL_CODE;
+                        continue;
+                    }
+                    if (old_code == LZW_NULL_CODE)
+                    {
+                        pixelStatck[top++] = suffix[code];
+                        old_code = code;
+                        first = code;
+                        continue;
+                    }
+                    inCode = code;
+                    if (code == availableCode)
+                    {
+                        pixelStatck[top++] = (byte)first;
+                        code = old_code;
+                    }
+                    while (code > clearCode)
+                    {
+                        pixelStatck[top++] = suffix[code];
+                        code = prefix[code];
+                    }
+                    first = suffix[code];
+                    if (availableCode > LZW_STACK_SIZE)
+                    {
+                        break;
+                    }
+                    pixelStatck[top++] = suffix[code];
+                    prefix[availableCode] = old_code;
+                    suffix[availableCode] = first;
+                    availableCode++;
+                    if (availableCode == code_mask + 1 && availableCode < LZW_STACK_SIZE)
+                    {
+                        codeSize++;
+                        code_mask = (1 << codeSize) - 1;
+                    }
+                    old_code = inCode;
+                }
+                top--;
+                pixels[xyz++] = (byte)pixelStatck[top];
+            }
+
+            return pixels;
+        }
+        private bool readStream(Stream stream, byte[] buffer)//从流的当前，读取流，已0为起始位置，写入buffer.Length长度的数据到buffer中
+        {
+            if (stream.Read(buffer, 0, buffer.Length) == buffer.Length)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }
